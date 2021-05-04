@@ -12,15 +12,26 @@ use std::{
 ///
 /// // Create a new circular buffer that can hold 16 elements
 /// let mut buf = CircBuf::<i32, 16>::new();
+///
 /// // Fill the buffer completely
 /// for i in 0..16 {
-///   buf.push(i);
+///     buf.push(i);
 /// }
 /// assert!(buf.is_full());
 ///
 /// // Iterate over values
 /// for n in buf.iter() {
-///   println!("{}", n);
+///     println!("{}", n);
+/// }
+///
+/// // Adding values when the buffer is full overwrites the oldest value
+/// for i in 16..19 {
+///     buf.push(i);
+/// }
+///
+/// // Iterate over values again
+/// for n in buf.iter() {
+///     println!("{}", n);
 /// }
 ///
 /// // Index specific values
@@ -29,8 +40,8 @@ use std::{
 ///
 /// // Delete values while the buffer is not empty
 /// while !buf.is_empty() {
-///   // Popped values are returned in Option
-///   println!("{}", buf.pop().unwrap());
+///     // Popped values are returned in Option
+///     println!("{}", buf.pop().unwrap());
 /// }
 ///
 /// // Check number of elements in a buffer
