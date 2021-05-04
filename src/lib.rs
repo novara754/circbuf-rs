@@ -209,6 +209,22 @@ impl<T, const SIZE: usize> CircBuf<T, SIZE> {
     }
 }
 
+impl<T, const SIZE: usize> Drop for CircBuf<T, SIZE> {
+    fn drop(&mut self) {
+        use std::ptr;
+
+        for i in 0..self.len {
+            let index = (self.start + i) % SIZE;
+            unsafe {
+                // SAFETY:
+                // `start` and `len` specify the range of valid elements in `data`.
+                // As such these values can be assumed to be initialized and dropped safely.
+                ptr::drop_in_place(self.data[index].as_mut_ptr());
+            }
+        }
+    }
+}
+
 impl<T, const SIZE: usize> Index<usize> for CircBuf<T, SIZE> {
     type Output = T;
 
