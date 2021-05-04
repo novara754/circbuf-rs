@@ -108,6 +108,16 @@ impl<T, const SIZE: usize> CircBuf<T, SIZE> {
     /// ```
     pub fn push(&mut self, elem: T) {
         let write_idx = (self.start + self.len) % SIZE;
+
+        if self.is_full() {
+            unsafe {
+                // SAFETY:
+                // The buffer is full so the upcoming write will overwrite an existing value.
+                // As such it is safe to assume the value is initialized and can be dropped.
+                std::ptr::drop_in_place(self.data[write_idx].as_mut_ptr());
+            }
+        }
+
         self.data[write_idx] = MaybeUninit::new(elem);
 
         if self.is_full() {
