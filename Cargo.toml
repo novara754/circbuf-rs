@@ -1,9 +1,12 @@
 [package]
 name = "circbuf"
+description = "A basic circular buffer library."
+keywords = ["cyclic buffer", "circular buffer", "collection", "storage", "buffer"]
+categories = ["library", "data-structures"]
 version = "0.1.0"
+readme = "README.md"
+license_file = "LICENSE"
 authors = ["vzwGrey <vzwgrey@gmail.com>"]
+repository = "http://github.com/vzwGrey/circbuf"
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
+publish = false
