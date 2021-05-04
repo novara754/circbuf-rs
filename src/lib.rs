@@ -24,6 +24,7 @@ use std::{
 /// let buf: CircBuf<i32, 8> = CircBuf::new();
 /// println!("buf[0]={}", buf[0]); // will panic!
 /// ```
+#[derive(Debug)]
 pub struct CircBuf<T, const SIZE: usize> {
     /// Start of the valid data in buffer.
     start: usize,
