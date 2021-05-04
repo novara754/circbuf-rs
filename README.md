@@ -1,3 +1,5 @@
+[![CI](https://github.com/vzwGrey/circbuf-rs/actions/workflows/ci.yaml/badge.svg)](https://github.com/vzwGrey/circbuf-rs/actions/workflows/ci.yaml)
+
 # circbuf
 
 Basic [circular buffer](https://en.wikipedia.org/wiki/Circular_buffer) library for Rust.
