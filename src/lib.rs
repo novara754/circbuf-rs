@@ -1,6 +1,29 @@
-use std::mem::MaybeUninit;
+use std::{
+    mem::MaybeUninit,
+    ops::{Index, IndexMut},
+};
 
 /// A circular buffer with a constant size.
+///
+/// # Indexing
+///
+/// Circular buffers can be indexed just like `Vec`s.
+/// Here the index `0` refers to the oldest elements currently in the buffer:
+/// ```
+/// use circbuf::CircBuf;
+/// let mut buf: CircBuf<_, 8> = CircBuf::new();
+/// for i in 3..9 {
+///     buf.push(i);
+/// }
+/// assert_eq!(buf[0], 3);
+/// assert_eq!(buf[2], 5);
+/// ```
+/// Buf be careful: Just like with `Vec`s, if you try to use an invalid index it will cause a panic:
+/// ```should_panic
+/// use circbuf::CircBuf;
+/// let buf: CircBuf<i32, 8> = CircBuf::new();
+/// println!("buf[0]={}", buf[0]); // will panic!
+/// ```
 pub struct CircBuf<T, const SIZE: usize> {
     /// Start of the valid data in buffer.
     start: usize,
@@ -135,6 +158,88 @@ impl<T, const SIZE: usize> CircBuf<T, SIZE> {
     pub fn is_full(&self) -> bool {
         self.len == SIZE
     }
+
+    /// Returns an iterator over the elements in the buffer.
+    pub fn iter(&self) -> Iter<T, SIZE> {
+        Iter { buf: self, idx: 0 }
+    }
+}
+
+impl<T, const SIZE: usize> Index<usize> for CircBuf<T, SIZE> {
+    type Output = T;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        if index >= self.len() {
+            panic!("the len is {} but the index is {}", self.len(), index);
+        } else {
+            let index = (self.start + index) % SIZE;
+            // SAFETY:
+            // - Index is less than length of valid area.
+            // - Index starts at `start` which marks the start of the valid area.
+            // Thus the element can be safely assumed to be initialized.
+            unsafe { &*self.data[index].as_ptr() }
+        }
+    }
+}
+
+impl<T, const SIZE: usize> IndexMut<usize> for CircBuf<T, SIZE> {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        if index >= self.len() {
+            panic!("the len is {} but the index is {}", self.len(), index);
+        } else {
+            let index = (self.start + index) % SIZE;
+            // SAFETY:
+            // - Index is less than length of valid area.
+            // - Index starts at `start` which marks the start of the valid area.
+            // Thus the element can be safely assumed to be initialized.
+            unsafe { &mut *self.data[index].as_mut_ptr() }
+        }
+    }
+}
+
+/// Iterator over elements of a circular buffer.
+/// Created from a `CircBuf` using [`iter`].
+///
+/// [`iter`]: CircBuf::iter
+///
+/// # Examples
+///
+/// ```
+/// use circbuf::CircBuf;
+/// let mut buf: CircBuf<_, 8> = CircBuf::new();
+/// for i in 0..6 {
+///     buf.push(i);
+/// }
+/// buf.pop();
+///
+/// assert_eq!(
+///     buf.iter().copied().collect::<Vec<i32>>(),
+///     vec![1, 2, 3, 4, 5]
+/// );
+/// ```
+pub struct Iter<'a, T, const SIZE: usize> {
+    /// Reference to the circular buffer to iterate over.
+    buf: &'a CircBuf<T, SIZE>,
+    /// Index of the next value to return from iterator.
+    idx: usize,
+}
+
+impl<'a, T, const SIZE: usize> Iterator for Iter<'a, T, SIZE> {
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.idx < self.buf.len() {
+            let elem = &self.buf[self.idx];
+            self.idx += 1;
+            Some(elem)
+        } else {
+            None
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.buf.len(), Some(self.buf.len()))
+    }
 }
 
 #[cfg(test)]
@@ -175,5 +280,19 @@ mod tests {
         for (val, expected) in buf.data[2..].iter().zip([2, 3, 4].iter()) {
             assert_eq!(unsafe { val.assume_init() }, *expected);
         }
+    }
+
+    #[test]
+    fn test_iter() {
+        let mut buf: CircBuf<_, 8> = CircBuf::new();
+        for i in 0..6 {
+            buf.push(i);
+        }
+        buf.pop();
+
+        assert_eq!(
+            buf.iter().copied().collect::<Vec<i32>>(),
+            vec![1, 2, 3, 4, 5]
+        );
     }
 }
