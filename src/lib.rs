@@ -1,4 +1,6 @@
-use std::{
+#![no_std]
+
+use core::{
     mem::MaybeUninit,
     ops::{Index, IndexMut},
 };
@@ -114,7 +116,7 @@ impl<T, const SIZE: usize> CircBuf<T, SIZE> {
                 // SAFETY:
                 // The buffer is full so the upcoming write will overwrite an existing value.
                 // As such it is safe to assume the value is initialized and can be dropped.
-                std::ptr::drop_in_place(self.data[write_idx].as_mut_ptr());
+                core::ptr::drop_in_place(self.data[write_idx].as_mut_ptr());
             }
         }
 
@@ -221,7 +223,7 @@ impl<T, const SIZE: usize> CircBuf<T, SIZE> {
 
 impl<T, const SIZE: usize> Drop for CircBuf<T, SIZE> {
     fn drop(&mut self) {
-        use std::ptr;
+        use core::ptr;
 
         for i in 0..self.len {
             let index = (self.start + i) % SIZE;
@@ -354,6 +356,8 @@ mod tests {
 
     #[test]
     fn test_iter() {
+        extern crate std;
+
         let mut buf: CircBuf<_, 8> = CircBuf::new();
         for i in 0..6 {
             buf.push(i);
@@ -361,8 +365,8 @@ mod tests {
         buf.pop();
 
         assert_eq!(
-            buf.iter().copied().collect::<Vec<i32>>(),
-            vec![1, 2, 3, 4, 5]
+            buf.iter().copied().collect::<std::vec::Vec<i32>>(),
+            std::vec![1, 2, 3, 4, 5]
         );
     }
 }
