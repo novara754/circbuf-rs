@@ -87,7 +87,7 @@ impl<T, const SIZE: usize> Default for CircBuf<T, SIZE> {
 
 impl<T, const SIZE: usize> CircBuf<T, SIZE> {
     /// Create a new, empty circular buffer of the specified size.
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             start: 0,
             len: 0,
